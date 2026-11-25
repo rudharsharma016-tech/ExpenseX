@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import { Button } from "react-native-paper";
+
 import {
   getTransactions,
   updateTransaction
@@ -20,16 +21,22 @@ export default function TransactionHistoryScreen({ onBack }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [editing, setEditing] = useState(null);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Expense");
   const [saving, setSaving] = useState(false);
 
+  // Search and filter states
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+
   const loadTransactions = async () => {
     try {
       setLoading(true);
       setError("");
+
       const data = await getTransactions();
       setTransactions(data);
     } catch (err) {
@@ -44,6 +51,18 @@ export default function TransactionHistoryScreen({ onBack }) {
     loadTransactions();
   }, []);
 
+  // Apply search and filter
+  const filteredTransactions = transactions.filter(item => {
+    const matchesSearch = item.title
+      .toLowerCase()
+      .includes(search.trim().toLowerCase());
+
+    const matchesFilter =
+      filter === "All" || item.type === filter;
+
+    return matchesSearch && matchesFilter;
+  });
+
   const startEditing = (item) => {
     setEditing(item);
     setTitle(item.title);
@@ -52,21 +71,42 @@ export default function TransactionHistoryScreen({ onBack }) {
   };
 
   const handleUpdate = async () => {
-    if (!title.trim() || !amount.trim() ||
-        !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
-      Alert.alert("Invalid Details", "Enter a valid title and amount.");
+    if (
+      !title.trim() ||
+      !amount.trim() ||
+      !Number.isFinite(Number(amount)) ||
+      Number(amount) <= 0
+    ) {
+      Alert.alert(
+        "Invalid Details",
+        "Enter a valid title and amount."
+      );
       return;
     }
 
     try {
       setSaving(true);
-      await updateTransaction(editing.id, title, amount, type);
+
+      await updateTransaction(
+        editing.id,
+        title,
+        amount,
+        type
+      );
+
       setEditing(null);
       await loadTransactions();
-      Alert.alert("Success", "Transaction updated successfully!");
+
+      Alert.alert(
+        "Success",
+        "Transaction updated successfully!"
+      );
     } catch (err) {
       console.log("Update error:", err);
-      Alert.alert("Error", "Unable to update transaction.");
+      Alert.alert(
+        "Error",
+        "Unable to update transaction."
+      );
     } finally {
       setSaving(false);
     }
@@ -74,9 +114,10 @@ export default function TransactionHistoryScreen({ onBack }) {
 
   const renderTransaction = ({ item }) => (
     <View style={styles.card}>
-      <View style={styles.row}>
+      <View style={styles.transactionRow}>
         <View style={styles.details}>
           <Text style={styles.name}>{item.title}</Text>
+
           <Text style={styles.date}>
             {item.createdAt?.toDate
               ? item.createdAt.toDate().toLocaleDateString()
@@ -84,11 +125,18 @@ export default function TransactionHistoryScreen({ onBack }) {
           </Text>
         </View>
 
-        <Text style={{
-          color: item.type === "Income" ? "#16803C" : "#D32F2F",
-          fontWeight: "bold"
-        }}>
-          {item.type === "Income" ? "+" : "-"} ₹{item.amount}
+        <Text
+          style={[
+            styles.amount,
+            {
+              color: item.type === "Income"
+                ? "#16803C"
+                : "#D32F2F"
+            }
+          ]}
+        >
+          {item.type === "Income" ? "+" : "-"} ₹
+          {Number(item.amount).toFixed(2)}
         </Text>
       </View>
 
@@ -106,14 +154,19 @@ export default function TransactionHistoryScreen({ onBack }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Transaction History</Text>
+      <Text style={styles.heading}>
+        Transaction History
+      </Text>
+
       <Text style={styles.subtitle}>
         View and manage your transactions
       </Text>
 
       {editing ? (
         <View style={styles.form}>
-          <Text style={styles.formHeading}>Edit Transaction</Text>
+          <Text style={styles.formHeading}>
+            Edit Transaction
+          </Text>
 
           <TextInput
             style={styles.input}
@@ -130,9 +183,11 @@ export default function TransactionHistoryScreen({ onBack }) {
             onChangeText={setAmount}
           />
 
-          <Text style={styles.label}>Transaction Type</Text>
+          <Text style={styles.label}>
+            Transaction Type
+          </Text>
 
-          <View style={styles.row}>
+          <View style={styles.filterRow}>
             <Button
               mode={type === "Income" ? "contained" : "outlined"}
               buttonColor="#16803C"
@@ -170,36 +225,75 @@ export default function TransactionHistoryScreen({ onBack }) {
             Cancel
           </Button>
         </View>
-      ) : loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#6541B8"
-          style={{ marginTop: 40 }}
-        />
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : transactions.length === 0 ? (
-        <Text style={styles.empty}>No transactions found yet.</Text>
       ) : (
-        <FlatList
-          data={transactions}
-          renderItem={renderTransaction}
-          keyExtractor={item => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 15 }}
-        />
-      )}
+        <>
+          {/* Search */}
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search transactions..."
+            value={search}
+            onChangeText={setSearch}
+          />
 
-      {!editing && (
-        <Button
-          mode="contained"
-          buttonColor="#6541B8"
-          style={styles.actionButton}
-          onPress={loadTransactions}
-          disabled={loading}
-        >
-          Refresh Transactions
-        </Button>
+          {/* Filters */}
+          <Text style={styles.label}>
+            Filter Transactions
+          </Text>
+
+          <View style={styles.filterRow}>
+            {["All", "Income", "Expense"].map(option => (
+              <Button
+                key={option}
+                mode={filter === option ? "contained" : "outlined"}
+                buttonColor={
+                  filter === option ? "#6541B8" : undefined
+                }
+                textColor={
+                  filter === option ? "white" : "#6541B8"
+                }
+                compact
+                onPress={() => setFilter(option)}
+                style={styles.filterButton}
+              >
+                {option}
+              </Button>
+            ))}
+          </View>
+
+          {loading ? (
+            <ActivityIndicator
+              size="large"
+              color="#6541B8"
+              style={styles.loader}
+            />
+          ) : error ? (
+            <Text style={styles.error}>{error}</Text>
+          ) : filteredTransactions.length === 0 ? (
+            <Text style={styles.empty}>
+              {transactions.length === 0
+                ? "No transactions found yet."
+                : "No matching transactions found."}
+            </Text>
+          ) : (
+            <FlatList
+              data={filteredTransactions}
+              renderItem={renderTransaction}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+            />
+          )}
+
+          <Button
+            mode="contained"
+            buttonColor="#6541B8"
+            style={styles.actionButton}
+            onPress={loadTransactions}
+            disabled={loading}
+          >
+            Refresh Transactions
+          </Button>
+        </>
       )}
 
       <Button
@@ -220,54 +314,100 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F1FF",
     padding: 20
   },
+
   heading: {
     fontSize: 26,
     fontWeight: "bold",
     color: "#38216D"
   },
+
   subtitle: {
     color: "#777",
-    marginBottom: 20
+    marginBottom: 18
   },
+
+  searchInput: {
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "#DDD2F5",
+    borderRadius: 10,
+    padding: 13,
+    marginBottom: 15
+  },
+
+  label: {
+    fontWeight: "bold",
+    color: "#38216D",
+    marginBottom: 10
+  },
+
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 15
+  },
+
+  filterButton: {
+    borderRadius: 8
+  },
+
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "white",
     padding: 15,
     borderRadius: 12,
     marginBottom: 12
   },
-  row: {
+
+  transactionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 10
   },
+
   details: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
+
   name: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#38216D"
   },
+
   date: {
     color: "#888",
     marginTop: 5
   },
+
+  amount: {
+    fontWeight: "bold",
+    fontSize: 14,
+    flexShrink: 1,
+    maxWidth: "48%",
+    textAlign: "right"
+  },
+
   type: {
     color: "#6541B8",
     marginVertical: 8
   },
+
   form: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "white",
     padding: 18,
     borderRadius: 12
   },
+
   formHeading: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#38216D",
     marginBottom: 15
   },
+
   input: {
     backgroundColor: "#F5F1FF",
     borderWidth: 1,
@@ -276,21 +416,29 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12
   },
-  label: {
-    fontWeight: "bold",
-    color: "#38216D",
-    marginBottom: 10
-  },
+
   actionButton: {
     marginTop: 12
   },
+
+  listContent: {
+    paddingBottom: 15
+  },
+
+  loader: {
+    marginTop: 35
+  },
+
   error: {
     color: "red",
-    textAlign: "center"
+    textAlign: "center",
+    marginTop: 25
   },
+
   empty: {
     textAlign: "center",
-    marginTop: 40,
+    marginTop: 35,
+    marginBottom: 20,
     color: "#777"
   }
 });

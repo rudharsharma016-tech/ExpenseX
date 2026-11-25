@@ -10,9 +10,10 @@ import {
   ActivityIndicator
 } from "react-native";
 import { Button } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { registerUser } from "../authService";
 
-export default function RegistrationScreen() {
+export default function RegistrationScreen({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,7 @@ export default function RegistrationScreen() {
     try {
       const result = await registerUser(email.trim(), password);
       console.log("Registered user:", result.user.uid);
+
       Alert.alert("Success", "Account created successfully!");
       setEmail("");
       setPassword("");
@@ -54,62 +56,110 @@ export default function RegistrationScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.logoCircle}>
-        <Text style={styles.logo}>₹</Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.header}>
+        <View style={styles.logoCircle}>
+          <Text style={styles.logo}>₹</Text>
+        </View>
+
+        <Text style={styles.title}>ExpenseX</Text>
+        <Text style={styles.subtitle}>Create Your Account</Text>
+        <Text style={styles.description}>
+          Take control of your finances, one step at a time.
+        </Text>
       </View>
 
-      <Text style={styles.title}>ExpenseX</Text>
-      <Text style={styles.subtitle}>Create Account</Text>
-      <Text style={styles.description}>
-        Start managing your money today.
-      </Text>
-
       <View style={styles.card}>
-        <Text style={styles.heading}>Register Now</Text>
+        <Text style={styles.heading}>Get Started</Text>
+        <Text style={styles.headingDescription}>
+          Enter your details to create your account
+        </Text>
 
         <Text style={styles.label}>Email Address</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons
+            name="email-outline"
+            size={21}
+            color="#7654B8"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            placeholderTextColor="#A49BB5"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
 
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Minimum 6 characters"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+
+        <View style={styles.inputContainer}>
+          <MaterialCommunityIcons
+            name="lock-outline"
+            size={21}
+            color="#7654B8"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Minimum 6 characters"
+            placeholderTextColor="#A49BB5"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+        </View>
+
+        <View style={styles.passwordHint}>
+          <MaterialCommunityIcons
+            name="shield-check-outline"
+            size={16}
+            color="#8066B5"
+          />
+          <Text style={styles.hintText}>
+            Password must contain at least 6 characters.
+          </Text>
+        </View>
 
         <Button
           mode="contained"
           onPress={handleRegister}
           disabled={loading}
           style={styles.button}
-          contentStyle={{ height: 50 }}
+          contentStyle={styles.buttonContent}
           buttonColor="#6541B8"
+          icon="account-plus-outline"
         >
           {loading ? "Creating Account..." : "Create Account"}
         </Button>
 
         {loading && (
-          <ActivityIndicator
-            color="#6541B8"
-            style={{ marginTop: 12 }}
-          />
+          <ActivityIndicator color="#6541B8" style={{ marginTop: 12 }} />
         )}
+
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>
+            Already have an account?
+          </Text>
+
+          <Text
+            style={styles.loginLink}
+            onPress={onLogin}
+          >
+            Login
+          </Text>
+        </View>
       </View>
 
       <Text style={styles.footer}>
-        Secure and simple expense management
+        © ExpenseX | Smart Expense Management
       </Text>
     </ScrollView>
   );
@@ -119,77 +169,133 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: "center",
-    backgroundColor: "#F5F1FF",
-    padding: 22
+    backgroundColor: "#F4F0FC",
+    paddingHorizontal: 22,
+    paddingVertical: 35
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 28
   },
   logoCircle: {
-    width: 85,
-    height: 85,
-    borderRadius: 25,
+    width: 78,
+    height: 78,
+    borderRadius: 24,
     backgroundColor: "#6541B8",
-    alignSelf: "center",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12
+    marginBottom: 12,
+    elevation: 6
   },
   logo: {
-    color: "white",
-    fontSize: 48,
+    color: "#FFFFFF",
+    fontSize: 46,
     fontWeight: "bold"
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#38216D",
-    textAlign: "center"
+    color: "#38216D"
   },
   subtitle: {
     fontSize: 23,
     fontWeight: "bold",
-    color: "#29213D",
-    textAlign: "center",
-    marginTop: 20
+    color: "#302345",
+    marginTop: 17
   },
   description: {
-    color: "#777",
+    fontSize: 13,
+    color: "#81788F",
     textAlign: "center",
-    marginTop: 7,
-    marginBottom: 25
+    marginTop: 8
   },
   card: {
-    backgroundColor: "white",
-    padding: 22,
-    borderRadius: 20,
-    elevation: 4
+    backgroundColor: "#FFFFFF",
+    padding: 23,
+    borderRadius: 23,
+    elevation: 5,
+    shadowColor: "#4A347A",
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 }
   },
   heading: {
-    fontSize: 20,
+    fontSize: 23,
     fontWeight: "bold",
-    color: "#38216D",
-    marginBottom: 22
+    color: "#38216D"
+  },
+  headingDescription: {
+    fontSize: 12,
+    color: "#958BA5",
+    marginTop: 6,
+    marginBottom: 25
   },
   label: {
-    fontWeight: "600",
-    color: "#444",
-    marginBottom: 7
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#403653",
+    marginBottom: 9
   },
-  input: {
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#F8F6FC",
     borderWidth: 1,
-    borderColor: "#E4DCF4",
-    padding: 14,
-    borderRadius: 11,
-    marginBottom: 18,
-    color: "#222"
+    borderColor: "#E6DDF4",
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    marginBottom: 20
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 15,
+    paddingHorizontal: 11,
+    fontSize: 14,
+    color: "#29213D",
+    outlineStyle: "none"
+  },
+  passwordHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: -9,
+    marginBottom: 18
+  },
+  hintText: {
+    fontSize: 11,
+    color: "#817492",
+    marginLeft: 6
   },
   button: {
-    borderRadius: 12,
-    marginTop: 8
+    borderRadius: 13,
+    marginTop: 7
+  },
+  buttonContent: {
+    height: 53
+  },
+  loginContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 25,
+    paddingTop: 17,
+    borderTopWidth: 1,
+    borderTopColor: "#EEE8F7"
+  },
+  loginText: {
+    color: "#77708A",
+    fontSize: 13
+  },
+  loginLink: {
+    color: "#6541B8",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginLeft: 6,
+    textDecorationLine: "underline"
   },
   footer: {
     textAlign: "center",
-    color: "#888",
-    marginTop: 25,
-    fontSize: 12
+    color: "#968CA5",
+    marginTop: 26,
+    fontSize: 11
   }
 });

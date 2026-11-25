@@ -7,7 +7,7 @@ import {
 
 import { auth, db } from "./firebaseConfig";
 
-export const addTransaction = async (title, amount, type) => {
+export const addTransaction = async (title, amount, type, category) => {
   const user = auth.currentUser;
 
   if (!user) {
@@ -19,6 +19,7 @@ export const addTransaction = async (title, amount, type) => {
     title: title.trim(),
     amount: Number(amount),
     type: type,
+    category: category,
     createdAt: serverTimestamp()
   });
 };

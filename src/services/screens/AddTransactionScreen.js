@@ -16,9 +16,27 @@ export default function AddTransactionScreen({ onBack }) {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("Expense");
+  const [category, setCategory] = useState("Food");
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const expenseCategories = [
+    "Food", "Travel", "Shopping",
+    "Education", "Bills", "Others"
+  ];
+
+  const incomeCategories = [
+    "Salary", "Scholarship", "Gift", "Other"
+  ];
+
+  const categories =
+    type === "Expense" ? expenseCategories : incomeCategories;
+
+  const handleTypeChange = (newType) => {
+    setType(newType);
+    setCategory(newType === "Expense" ? "Food" : "Salary");
+  };
 
   const handleSave = async () => {
     setMessage("");
@@ -37,7 +55,7 @@ export default function AddTransactionScreen({ onBack }) {
     try {
       setLoading(true);
 
-      await addTransaction(title, amount, type);
+      await addTransaction(title, amount, type, category);
 
       setSuccess(true);
       setMessage("Transaction saved successfully!");
@@ -91,7 +109,7 @@ export default function AddTransactionScreen({ onBack }) {
             buttonColor={type === "Income" ? "#16803C" : "white"}
             textColor={type === "Income" ? "white" : "#16803C"}
             style={styles.typeButton}
-            onPress={() => setType("Income")}
+            onPress={() => handleTypeChange("Income")}
           >
             Income
           </Button>
@@ -101,14 +119,32 @@ export default function AddTransactionScreen({ onBack }) {
             buttonColor={type === "Expense" ? "#D32F2F" : "white"}
             textColor={type === "Expense" ? "white" : "#D32F2F"}
             style={styles.typeButton}
-            onPress={() => setType("Expense")}
+            onPress={() => handleTypeChange("Expense")}
           >
             Expense
           </Button>
         </View>
 
+        <Text style={styles.label}>Select Category</Text>
+
+        <View style={styles.categoryButtons}>
+          {categories.map((item) => (
+            <Button
+              key={item}
+              mode={category === item ? "contained" : "outlined"}
+              buttonColor={category === item ? "#6541B8" : "white"}
+              textColor={category === item ? "white" : "#6541B8"}
+              style={styles.categoryButton}
+              compact
+              onPress={() => setCategory(item)}
+            >
+              {item}
+            </Button>
+          ))}
+        </View>
+
         <Text style={styles.selected}>
-          Selected: {type}
+          Selected: {type} - {category}
         </Text>
 
         {message !== "" && (
@@ -192,16 +228,26 @@ const styles = StyleSheet.create({
   },
   typeButtons: {
     flexDirection: "row",
-    gap: 12
+    gap: 12,
+    marginBottom: 22
   },
   typeButton: {
     flex: 1,
     borderRadius: 10
   },
+  categoryButtons: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 5
+  },
+  categoryButton: {
+    borderRadius: 10
+  },
   selected: {
     textAlign: "center",
     color: "#6541B8",
-    marginTop: 15,
+    marginTop: 18,
     marginBottom: 20,
     fontWeight: "600"
   },
